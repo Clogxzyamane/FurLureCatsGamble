@@ -41,12 +41,105 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Background
+  - name: Sky
     uniqueID: 1389831439
     locked: 0
-  - name: Walls
+  - name: Sun
     uniqueID: 3889099147
     locked: 0
-  - name: Stuffs
+  - name: Clouds1
+    uniqueID: 1277471707
+    locked: 0
+  - name: Clouds2
+    uniqueID: 3865484529
+    locked: 0
+  - name: Environment9
+    uniqueID: 2173900555
+    locked: 0
+  - name: Environment8.5
+    uniqueID: 3073193111
+    locked: 0
+  - name: Environment8
+    uniqueID: 2315581903
+    locked: 0
+  - name: Environment7.5
+    uniqueID: 1908483883
+    locked: 0
+  - name: Environment7
+    uniqueID: 1025411281
+    locked: 0
+  - name: Environment6
+    uniqueID: 2681008551
+    locked: 0
+  - name: Environment5.5
+    uniqueID: 3472965371
+    locked: 0
+  - name: Environment5
+    uniqueID: 2635690665
+    locked: 0
+  - name: Environment4.5
+    uniqueID: 356000777
+    locked: 0
+  - name: Environment4
+    uniqueID: 3601569001
+    locked: 0
+  - name: Environment3.5
+    uniqueID: 2379384245
+    locked: 0
+  - name: Environment3
+    uniqueID: 626934303
+    locked: 0
+  - name: Environment2.5
+    uniqueID: 2072001865
+    locked: 0
+  - name: Environment2
+    uniqueID: 250718669
+    locked: 0
+  - name: Environment1.5
+    uniqueID: 810036813
+    locked: 0
+  - name: Environment1
+    uniqueID: 2656779457
+    locked: 0
+  - name: Environment0
+    uniqueID: 3641958095
+    locked: 0
+  - name: Interior_Wall
     uniqueID: 1704238099
+    locked: 0
+  - name: Interior_Wall_Support1
+    uniqueID: 4077725525
+    locked: 0
+  - name: Interior_Wall_Support2
+    uniqueID: 2480132851
+    locked: 0
+  - name: Interior_Wall_Support3
+    uniqueID: 3829138375
+    locked: 0
+  - name: NPC's
+    uniqueID: 1229867475
+    locked: 0
+  - name: Interior_furniture1
+    uniqueID: 711706241
+    locked: 0
+  - name: Interior_furniture2
+    uniqueID: 3479376147
+    locked: 0
+  - name: Interior_furniture3
+    uniqueID: 4102916685
+    locked: 0
+  - name: Blockout
+    uniqueID: 2312633321
+    locked: 0
+  - name: Foliage1
+    uniqueID: 2834565643
+    locked: 0
+  - name: Platfrom
+    uniqueID: 1383205689
+    locked: 0
+  - name: Characters
+    uniqueID: 542486527
+    locked: 0
+  - name: Blank
+    uniqueID: 3350485325
     locked: 0
