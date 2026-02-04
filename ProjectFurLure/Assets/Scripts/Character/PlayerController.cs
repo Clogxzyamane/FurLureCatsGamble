@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
 {
 
     float horizontalInput;
-    float moveSpeed =  8f;
+    float moveSpeed =  10f;
     bool isFacingRight = false;
     float jumpPower = 5f;
     bool isJumping = false;
