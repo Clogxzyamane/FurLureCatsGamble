@@ -131,6 +131,12 @@ TagManager:
   - name: Blockout
     uniqueID: 2312633321
     locked: 0
+  - name: Foliage3
+    uniqueID: 1371682723
+    locked: 0
+  - name: Foliage2
+    uniqueID: 3350485325
+    locked: 0
   - name: Foliage1
     uniqueID: 2834565643
     locked: 0
@@ -140,6 +146,12 @@ TagManager:
   - name: Characters
     uniqueID: 542486527
     locked: 0
-  - name: Blank
-    uniqueID: 3350485325
+  - name: Front1
+    uniqueID: 3940076821
+    locked: 0
+  - name: Front2
+    uniqueID: 965411737
+    locked: 0
+  - name: Front3
+    uniqueID: 3496850939
     locked: 0
