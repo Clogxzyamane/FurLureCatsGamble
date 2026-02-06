@@ -7,13 +7,29 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
 
-    float horizontalInput;
-    float moveSpeed =  10f;
-    bool isFacingRight = false;
-    float jumpPower = 6f;
-    bool isJumping = false;
+    private float horizontalInput;
+    private float moveSpeed =  10f;
+    private bool isFacingRight = true;
+    private float jumpPower = 6f;
+    private bool isJumping;
 
-    Rigidbody2D rb;
+
+
+    private bool canDash = true;
+    private bool isDashing;
+    private float dashSpeed = 20f;
+    private float dashDuration = 0.2f;
+    private float dashCooldown = 0.5f;
+
+    private bool doubleJump;
+    private float doubleJumpPower = 8f;
+
+    private Rigidbody2D rb;
+    [SerializeField] private TrailRenderer dashTrail;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask groundLayer;
+
+
 
     void Start()
 
@@ -25,19 +41,52 @@ public class PlayerController : MonoBehaviour
     
     void Update()
     {
+        if (isDashing)
+        {
+            return;
+        }
+
         horizontalInput = Input.GetAxis("Horizontal");
         FlipSprite();
-        if(Input.GetButtonDown("Jump") && !isJumping)
+
+        if (IsGrounded() && !Input.GetButton("Jump")&& !isJumping)
         {
-            rb.velocity = new Vector2(rb.velocity.x, jumpPower);
-            isJumping = true;
+            doubleJump = false;
+        }
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            if (IsGrounded() || doubleJump)
+            {
+                rb.velocity = new Vector2(rb.velocity.x, doubleJump ? doubleJumpPower: jumpPower);
+
+                isJumping = true;
+
+                doubleJump = !doubleJump;
+            }
+        }
+
+        if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+        {
+            StartCoroutine(Dash());
         }
     }
 
     private void FixedUpdate()
     {
+        if (isDashing)
+        {
+            return;
+        }
+
         rb.velocity = new Vector2(horizontalInput * moveSpeed, rb.velocity.y);
     }
+
 
     void FlipSprite()
     {
@@ -54,7 +103,27 @@ public class PlayerController : MonoBehaviour
             {
                 isJumping = false;
             }
-        
-    
+
+    private bool IsGrounded()
+    {
+        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+    }
+
+
+    private IEnumerator Dash()
+    {
+        canDash = false;
+        isDashing = true;
+        float originalGravity = rb.gravityScale;
+        rb.gravityScale = 0f;
+        rb.velocity = new Vector2(transform.localScale.x * dashSpeed, 0f);
+        dashTrail.emitting = true;
+        yield return new WaitForSeconds(dashDuration);
+        dashTrail.emitting = false;
+        rb.gravityScale = originalGravity;
+        isDashing = false;
+        yield return new WaitForSeconds(dashCooldown);
+        canDash = true;
+    }
 }
 
