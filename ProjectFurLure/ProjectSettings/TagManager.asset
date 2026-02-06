@@ -104,6 +104,9 @@ TagManager:
   - name: Environment0
     uniqueID: 3641958095
     locked: 0
+  - name: Environment-1
+    uniqueID: 3800815115
+    locked: 0
   - name: Interior_Wall
     uniqueID: 1704238099
     locked: 0

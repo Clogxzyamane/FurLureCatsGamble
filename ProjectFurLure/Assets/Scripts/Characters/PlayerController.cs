@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
     float horizontalInput;
     float moveSpeed =  10f;
     bool isFacingRight = false;
-    float jumpPower = 5f;
+    float jumpPower = 6f;
     bool isJumping = false;
 
     Rigidbody2D rb;
