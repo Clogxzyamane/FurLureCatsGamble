@@ -102,9 +102,6 @@ TagManager:
     uniqueID: 2656779457
     locked: 0
   - name: Environment0
-    uniqueID: 3641958095
-    locked: 0
-  - name: Environment-1
     uniqueID: 3800815115
     locked: 0
   - name: Interior_Wall
@@ -133,6 +130,9 @@ TagManager:
     locked: 0
   - name: Blockout
     uniqueID: 2312633321
+    locked: 0
+  - name: Foliage4
+    uniqueID: 3641958095
     locked: 0
   - name: Foliage3
     uniqueID: 1371682723
