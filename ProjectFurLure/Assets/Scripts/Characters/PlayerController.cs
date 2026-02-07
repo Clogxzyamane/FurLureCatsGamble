@@ -28,7 +28,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private TrailRenderer dashTrail;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundLayer;
-
+    [SerializeField] private LayerMask stairsLayer;
 
 
     void Start()
@@ -75,6 +75,17 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(Dash());
         }
+
+        if (IsStairs())
+        {
+            rb.gravityScale = 7f;
+              
+        }
+        else
+        {
+            rb.gravityScale = 1f;
+        }
+
     }
 
     private void FixedUpdate()
@@ -107,6 +118,11 @@ public class PlayerController : MonoBehaviour
     private bool IsGrounded()
     {
         return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+    }
+
+    private bool IsStairs()
+    {
+        return Physics2D.OverlapCircle(groundCheck.position, 0.5f, stairsLayer);
     }
 
 
