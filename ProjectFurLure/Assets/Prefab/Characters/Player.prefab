@@ -295,7 +295,6 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  animator: {fileID: 0}
 --- !u!96 &2669317373728732681
 TrailRenderer:
   serializedVersion: 3
