@@ -122,7 +122,7 @@ public class PlayerController : MonoBehaviour
 
     private bool IsStairs()
     {
-        return Physics2D.OverlapCircle(groundCheck.position, 0.5f, stairsLayer);
+        return Physics2D.OverlapCircle(groundCheck.position, 0.7f, stairsLayer);
     }
 
 
