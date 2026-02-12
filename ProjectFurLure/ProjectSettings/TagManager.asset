@@ -129,9 +129,6 @@ TagManager:
   - name: Interior_furniture3
     uniqueID: 4102916685
     locked: 0
-  - name: Blockout
-    uniqueID: 2312633321
-    locked: 0
   - name: Foliage4
     uniqueID: 3641958095
     locked: 0
@@ -143,6 +140,9 @@ TagManager:
     locked: 0
   - name: Foliage1
     uniqueID: 2834565643
+    locked: 0
+  - name: Blockout
+    uniqueID: 2312633321
     locked: 0
   - name: Platfrom
     uniqueID: 1383205689
