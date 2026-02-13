@@ -14870,7 +14870,7 @@ GameObject:
   - component: {fileID: 743147590}
   - component: {fileID: 743147589}
   m_Layer: 0
-  m_Name: Square (1)
+  m_Name: MineEntrence
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
