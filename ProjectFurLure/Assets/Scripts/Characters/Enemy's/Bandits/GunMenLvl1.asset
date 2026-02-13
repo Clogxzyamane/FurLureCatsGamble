@@ -15,11 +15,11 @@ MonoBehaviour:
   Name: 
   Description: 
   Image: {fileID: 0}
-  type: 0
-  Gang: 0
-  MaxHealth: 0
-  Attack: 0
-  Defense: 0
-  HardAttack: 0
-  HardDefense: 0
-  speed: 0
+  type: 1
+  Gang: 1
+  MaxHealth: 400
+  Attack: 50
+  Defense: 100
+  HardAttack: 100
+  HardDefense: 200
+  speed: 25
