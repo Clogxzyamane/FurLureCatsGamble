@@ -19,6 +19,61 @@ public class LawLureBase : ScriptableObject
     [SerializeField] int HardAttack;
     [SerializeField] int HardDefense;
     [SerializeField] int speed;
+
+    public string nameofLL
+    {
+        get { return Name; }
+    }
+
+    public string description
+    {
+        get { return Description; }
+    }
+
+    public Sprite image
+    {
+        get { return Image; }
+    }
+
+    public EnemyType LLtype
+    {
+        get { return type; }
+    }
+
+    public LawLureType organisation
+    {
+        get { return Organisation; }
+    }
+
+    public int maxHealth
+    {
+        get { return MaxHealth; }
+    }
+
+    public int attack
+    {
+        get { return Attack; }
+    }
+
+    public int defense
+    {
+        get { return Defense; }
+    }
+
+    public int hardAttack
+    {
+        get { return HardAttack; }
+    }
+
+    public int hardDefense
+    {
+        get { return HardDefense; }
+    }
+
+    public int speedOfLL
+    {
+        get { return speed; }
+    }
 }
 public enum EnemyType
 {

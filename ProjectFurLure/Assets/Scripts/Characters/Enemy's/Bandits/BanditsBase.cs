@@ -19,8 +19,53 @@ public class BanditsBase : ScriptableObject
     [SerializeField] int HardAttack;
     [SerializeField] int HardDefense;
     [SerializeField] int speed;
+
+    public string nameofBandit { 
+        get { return Name; } 
+    } 
+    
+    public string description { 
+        get { return Description; }
+    }
+
+    public Sprite image { 
+            get { return Image; }
+    }
+
+    public BanditType bandittype { 
+            get { return type; }
+    }
+
+    public GangType gang { 
+            get { return Gang; }
+    }
+
+    public int maxHealth { 
+            get { return MaxHealth; }
+    }
+
+    public int attack { 
+            get { return Attack; }
+    }
+
+    public int defense { 
+            get { return Defense; }
+    }
+
+    public int hardAttack { 
+            get { return HardAttack; }
+    }
+
+    public int hardDefense { 
+            get { return HardDefense; }
+    }
+
+    public int speedOfBandit { 
+            get { return speed; }
+    }
 }
-public enum BanditType
+     
+    public enum BanditType
 {
     None,
     gunmen,
