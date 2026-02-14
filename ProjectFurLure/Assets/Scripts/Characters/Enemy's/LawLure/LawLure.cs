@@ -7,10 +7,13 @@ public class LawLure
     LawLureBase _base;
     int level;
 
+       public int HP { get; set; }
+
     public LawLure(LawLureBase LLbase, int LLlevel)
     {
         this._base = LLbase;
         this.level = LLlevel;
+        HP = _base.maxHealth;
     }
 
     public int MaxHealth

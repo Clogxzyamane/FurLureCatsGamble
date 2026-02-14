@@ -8,10 +8,13 @@ public class Bandits
     BanditsBase _base;
     int level;
 
+    public int HP { get; set; }
+
     public Bandits(BanditsBase Bbase, int Blevel)
     {
         this._base = Bbase;
         this.level = Blevel;
+        HP = _base.maxHealth;
     }
 
     public int MaxHealth
