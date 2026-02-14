@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Gunmen
   m_EditorClassIdentifier: 
   Name: Gunmen
-  Description: 
+  Description: 'Lure Gunmen are strong '
   Image: {fileID: 0}
   type: 1
   Organisation: 2
