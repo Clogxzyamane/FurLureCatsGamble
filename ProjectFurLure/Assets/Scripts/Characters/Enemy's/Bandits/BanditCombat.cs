@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class BanditCombat : MonoBehaviour
 {
-    public BanditsBase Bandit1;
-    public BanditsBase Bandit2;
-    public BanditsBase Bandit3;
+    public BanditsBase Bandit;
+    public BanditMovesbase BanditMove1;
+    public BanditMovesbase BanditMove2;
+    public BanditMovesbase BanditMove3;
 }
