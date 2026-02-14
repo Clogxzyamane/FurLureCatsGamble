@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,10 +25,13 @@ public class TurnBasedSystem : MonoBehaviour
     PlayerUnit playerUnit;
     PlayerUnit enemyUnit;
 
-    public Text dialogue;
+    public TextMeshProUGUI dialogue;
 
     public TurnBasedHUD playerHUD;
-    public TurnBasedHUD enemyHUD;
+    public TurnBasedHUD enemy1HUD;
+    public TurnBasedHUD enemy2HUD;
+    public TurnBasedHUD enemy3HUD;
+
 
     public TurnState State;
 
@@ -61,7 +65,7 @@ public class TurnBasedSystem : MonoBehaviour
 
 
         playerHUD.SetHUD(playerUnit);
-        enemyHUD.SetHUD(enemyUnit);
+        enemy1HUD.SetHUD(enemyUnit);
 
         yield return new WaitForSeconds(2f);
         State = TurnState.PlayerTurn;
@@ -75,7 +79,7 @@ public class TurnBasedSystem : MonoBehaviour
         yield return new WaitForSeconds(2f);
         //Attack
         bool isDead = enemyUnit.TakeDamage(playerUnit.damage);
-        enemyHUD.SetHP(enemyUnit.currentHP);
+        enemy1HUD.SetHP(enemyUnit.currentHP);
         dialogue.text = "You attack " + enemyUnit.unitName + " for " + playerUnit.damage + " damage";
         yield return new WaitForSeconds(2f);
         if (isDead)
@@ -128,6 +132,7 @@ public class TurnBasedSystem : MonoBehaviour
             return;
         StartCoroutine(PlayerTurn());
     }
+
 }
 
 
