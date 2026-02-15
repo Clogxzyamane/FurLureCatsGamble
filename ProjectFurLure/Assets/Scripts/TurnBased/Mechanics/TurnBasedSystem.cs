@@ -23,7 +23,9 @@ public class TurnBasedSystem : MonoBehaviour
     public Transform enemyPoint3;
 
     PlayerUnit playerUnit;
-    PlayerUnit enemyUnit;
+    PlayerUnit enemyUnit1;
+    PlayerUnit enemyUnit2;
+    PlayerUnit enemyUnit3;
 
     public TextMeshProUGUI dialogue;
 
@@ -50,22 +52,23 @@ public class TurnBasedSystem : MonoBehaviour
         GameObject EnemyGO1 = Instantiate(enemy1, enemyPoint1);
         EnemyGO1.GetComponent<PlayerUnit>();
 
-        dialogue.text = enemyUnit.unitName + " approaches";
 
 
         GameObject EnemyGO2 = Instantiate(enemy2, enemyPoint2);
         EnemyGO2.GetComponent<PlayerUnit>();
 
-        dialogue.text = enemyUnit.unitName + " approaches";
+        
 
         GameObject EnemyGO3 = Instantiate(enemy3, enemyPoint3);
         EnemyGO3.GetComponent<PlayerUnit>();
 
-        dialogue.text = enemyUnit.unitName + " approaches";
+        
 
 
         playerHUD.SetHUD(playerUnit);
-        enemy1HUD.SetHUD(enemyUnit);
+        enemy1HUD.SetHUD(enemyUnit1);
+        enemy2HUD.SetHUD(enemyUnit2);
+        enemy3HUD.SetHUD(enemyUnit3);
 
         yield return new WaitForSeconds(2f);
         State = TurnState.PlayerTurn;
@@ -78,9 +81,9 @@ public class TurnBasedSystem : MonoBehaviour
         dialogue.text = "Play your cards";
         yield return new WaitForSeconds(2f);
         //Attack
-        bool isDead = enemyUnit.TakeDamage(playerUnit.damage);
-        enemy1HUD.SetHP(enemyUnit.currentHP);
-        dialogue.text = "You attack " + enemyUnit.unitName + " for " + playerUnit.damage + " damage";
+        bool isDead = enemyUnit1.TakeDamage(playerUnit.damage);
+        enemy1HUD.SetHP(enemyUnit1.currentHP);
+        dialogue.text = "You attack " + enemyUnit1.unitName + " for " + playerUnit.damage + " damage";
         yield return new WaitForSeconds(2f);
         if (isDead)
         {
@@ -96,11 +99,11 @@ public class TurnBasedSystem : MonoBehaviour
 
     IEnumerator EnemyTurn()
     {
-        dialogue.text = enemyUnit.unitName + " attacks!";
+        dialogue.text = enemyUnit1.unitName + " attacks!";
         yield return new WaitForSeconds(1f);
-        bool isDead = playerUnit.TakeDamage(enemyUnit.damage);
+        bool isDead = playerUnit.TakeDamage(enemyUnit1.damage);
         playerHUD.SetHP(playerUnit.currentHP);
-        dialogue.text = enemyUnit.unitName + " attacks you for " + enemyUnit.damage + " damage";
+        dialogue.text = enemyUnit1.unitName + " attacks you for " + enemyUnit1.damage + " damage";
         yield return new WaitForSeconds(2f);
         if (isDead)
         {

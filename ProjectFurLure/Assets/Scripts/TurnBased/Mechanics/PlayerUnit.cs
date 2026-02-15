@@ -6,7 +6,6 @@ public class PlayerUnit : MonoBehaviour
 {
 
     public string unitName;
-    public int unitLevel;
 
     public int damage;
 
