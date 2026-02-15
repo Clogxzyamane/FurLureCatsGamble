@@ -9899,8 +9899,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e1b0808bf180c64c90165c3b1c18419, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hpText: {fileID: 2015395067}
-  hpSlider: {fileID: 1039487397}
+  healthText: {fileID: 0}
+  healthSlider: {fileID: 0}
+  statusEffectIcons: []
+  bulletIcons: []
 --- !u!114 &667829005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11233,6 +11235,23 @@ MonoBehaviour:
   enemy2HUD: {fileID: 1920795304}
   enemy3HUD: {fileID: 1095233472}
   State: 0
+  dodgeWindowSeconds: 1.5
+  dodgeSuccessChance: 0.75
+  deck: []
+  hand:
+  - cardName: Strike
+    damage: 1
+  - cardName: Strike
+    damage: 1
+  - cardName: Strike
+    damage: 1
+  cardButtons: []
+  cardLabels: []
+  maxFocusPoints: 9
+  focusPoints: 9
+  freeShotButton: {fileID: 0}
+  focusLabel: {fileID: 0}
+  freeShotDamage: 1
 --- !u!4 &798028040
 Transform:
   m_ObjectHideFlags: 0
@@ -16019,8 +16038,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e1b0808bf180c64c90165c3b1c18419, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hpText: {fileID: 499365123}
-  hpSlider: {fileID: 817158554}
+  healthText: {fileID: 0}
+  healthSlider: {fileID: 0}
+  statusEffectIcons: []
+  bulletIcons: []
 --- !u!114 &1095233473
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20425,8 +20446,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e1b0808bf180c64c90165c3b1c18419, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hpText: {fileID: 955333428}
-  hpSlider: {fileID: 1824642420}
+  healthText: {fileID: 955333428}
+  healthSlider: {fileID: 1824642420}
+  statusEffectIcons: []
+  bulletIcons: []
 --- !u!114 &1375966748
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27846,8 +27869,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e1b0808bf180c64c90165c3b1c18419, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hpText: {fileID: 1182042258}
-  hpSlider: {fileID: 1955941443}
+  healthText: {fileID: 0}
+  healthSlider: {fileID: 0}
+  statusEffectIcons: []
+  bulletIcons: []
 --- !u!1 &1931229116
 GameObject:
   m_ObjectHideFlags: 0
