@@ -342,9 +342,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   unitName: Echo
+  isEnemy: 0
+  enemyType: 2
+  affiliation: 0
+  enemyRole: 6
+  baseDamage: 0
   damage: 100
   maxHP: 400
   currentHP: 400
+  statusEffects: []
 --- !u!1 &7223761627168579476
 GameObject:
   m_ObjectHideFlags: 0
