@@ -29,6 +29,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private LayerMask stairsLayer;
+    [SerializeField] private LayerMask ladderLayer;
 
 
     void Start()
@@ -86,6 +87,17 @@ public class PlayerController : MonoBehaviour
             rb.gravityScale = 1f;
         }
 
+        if(Input.GetKeyDown(KeyCode.W) && IsLadder())
+        {
+            rb.gravityScale = 10f;
+            rb.velocity = new Vector2(rb.velocity.x, moveSpeed);
+        }
+        else if(Input.GetKeyUp(KeyCode.W) && IsLadder())
+        {
+            rb.gravityScale = 0f;
+            rb.velocity = new Vector2(rb.velocity.x, 0f);
+        }
+
     }
 
     private void FixedUpdate()
@@ -124,6 +136,14 @@ public class PlayerController : MonoBehaviour
     {
         return Physics2D.OverlapCircle(groundCheck.position, 0.7f, stairsLayer);
     }
+
+    private bool IsLadder()
+    {
+        return Physics2D.OverlapCircle(groundCheck.position, 0.9f, ladderLayer);
+    }
+
+
+
 
 
     private IEnumerator Dash()
