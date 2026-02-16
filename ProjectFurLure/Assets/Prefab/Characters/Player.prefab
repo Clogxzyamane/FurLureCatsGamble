@@ -215,6 +215,9 @@ MonoBehaviour:
   stairsLayer:
     serializedVersion: 2
     m_Bits: 128
+  ladderLayer:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!96 &2669317373728732681
 TrailRenderer:
   serializedVersion: 3
