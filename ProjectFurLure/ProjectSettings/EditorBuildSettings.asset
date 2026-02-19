@@ -8,4 +8,16 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/WildWestACT1.unity
     guid: 2cda990e2423bbf4892e6590ba056729
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: 1447f488d6524da41b12d325bd929a7a
+  - enabled: 1
+    path: Assets/Scenes/WildWestStart.unity
+    guid: 59d4da3c037f9e04a94bb0fd33c47925
+  - enabled: 1
+    path: Assets/Scenes/AbandonedMine.unity
+    guid: bbd59718a54c76d48a6f273725b04fc9
+  - enabled: 1
+    path: Assets/Scenes/TurnBasedCombat.unity
+    guid: 806cc6e913c4d514b8fdb1e513992040
   m_configObjects: {}
