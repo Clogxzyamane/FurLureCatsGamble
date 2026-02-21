@@ -8142,7 +8142,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 9
+  m_text: Bullets
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
   m_sharedMaterial: {fileID: -3194847936386300935, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
@@ -12632,6 +12632,7 @@ MonoBehaviour:
   dodgeText: {fileID: 661544520}
   deck:
   - {fileID: 11400000, guid: 88d0af9d9b651c244bdc1b371ba8c5f0, type: 2}
+  - {fileID: 11400000, guid: 83677ee97a05ea34188bbfc598d60cb7, type: 2}
   maxFocusPoints: 9
   focusPoints: 9
   attackTime: 1.5
@@ -20208,8 +20209,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 20
+  m_fontSizeBase: 20
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
