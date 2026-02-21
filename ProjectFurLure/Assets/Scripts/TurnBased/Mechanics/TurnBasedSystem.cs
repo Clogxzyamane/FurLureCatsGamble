@@ -90,13 +90,20 @@ public class TurnBasedSystem : MonoBehaviour
     [Header("Focus (Bullets)")]
     [Range(0, 9)] [SerializeField] int maxFocusPoints = 9;
     [SerializeField]               int focusPoints    = 9;
+  
+
 
     // ── Dodge timing ──────────────────────────────────────────────────────────
 
     [Header("Dodge Timing")]
     [SerializeField] float attackTime       = 1.5f;
     [SerializeField] float dodgeWindowStart = 0.5f;
-    [SerializeField] float dodgeWindowEnd   = 0.9f;
+    [SerializeField] float dodgeWindowEnd = 0.9f;
+
+    // ── bullets On Dodge  ──────────────────────────────────────────────────────────
+
+    [Header("bullets On Dodge")]
+    [SerializeField] int bulletsOnDodge = 1;
 
     // ── State ─────────────────────────────────────────────────────────────────
 
@@ -506,7 +513,7 @@ public class TurnBasedSystem : MonoBehaviour
         if (dodged)
         {
             // Successful dodge → award +1 bullet
-            focusPoints = Mathf.Min(focusPoints + 1, maxFocusPoints);
+            focusPoints = Mathf.Min(focusPoints + bulletsOnDodge, maxFocusPoints);
             playerHUD?.SetBullets(focusPoints, maxFocusPoints);
             UpdateFocusLabel();
             dialogue.text = "Dodged! +1 bullet";
