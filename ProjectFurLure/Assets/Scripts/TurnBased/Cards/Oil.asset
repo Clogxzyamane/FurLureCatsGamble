@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 135015e415cdf0549939f455be23cd1d, type: 3}
   m_Name: Oil
   m_EditorClassIdentifier: 
-  cardName: New Card
+  cardName: Oil
   cardImage: {fileID: 0}
   bulletCost: 0
   cardDamage: 5

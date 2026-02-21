@@ -881,8 +881,9 @@ GameObject:
   - component: {fileID: 47010788}
   - component: {fileID: 47010787}
   - component: {fileID: 47010789}
+  - component: {fileID: 47010790}
   m_Layer: 5
-  m_Name: Button
+  m_Name: Attack1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -903,9 +904,9 @@ RectTransform:
   - {fileID: 203217631}
   m_Father: {fileID: 299296748}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -642, y: 200}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 318, y: -295}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &47010787
@@ -990,6 +991,22 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &47010790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 47010785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d179bb98826472643b26c87d4d5354e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldTarget: {fileID: 1219294327}
+  offset: {x: 20, y: -20}
+  sceneCamera: {fileID: 519420031}
+  canvas: {fileID: 299296747}
 --- !u!1 &60830565
 GameObject:
   m_ObjectHideFlags: 0
@@ -2477,8 +2494,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
+  m_sharedMaterial: {fileID: -3194847936386300935, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3451,8 +3468,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
+  m_sharedMaterial: {fileID: -3194847936386300935, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4149,8 +4166,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
+  m_sharedMaterial: {fileID: -3194847936386300935, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -8597,7 +8614,7 @@ GameObject:
   - component: {fileID: 558950960}
   - component: {fileID: 558950959}
   m_Layer: 5
-  m_Name: Card1 (2)
+  m_Name: Card3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8715,7 +8732,7 @@ GameObject:
   m_Component:
   - component: {fileID: 561815361}
   m_Layer: 0
-  m_Name: PlayerSpot3
+  m_Name: EnemySpot3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10863,8 +10880,9 @@ GameObject:
   - component: {fileID: 707039086}
   - component: {fileID: 707039085}
   - component: {fileID: 707039087}
+  - component: {fileID: 707039088}
   m_Layer: 5
-  m_Name: Button (2)
+  m_Name: Attack3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10885,9 +10903,9 @@ RectTransform:
   - {fileID: 929650817}
   m_Father: {fileID: 299296748}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -151, y: 200}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 809, y: -295}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &707039085
@@ -10972,6 +10990,22 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &707039088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 707039083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d179bb98826472643b26c87d4d5354e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldTarget: {fileID: 561815361}
+  offset: {x: 20, y: -20}
+  sceneCamera: {fileID: 519420031}
+  canvas: {fileID: 299296747}
 --- !u!1 &708432723
 GameObject:
   m_ObjectHideFlags: 0
@@ -11526,8 +11560,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
+  m_sharedMaterial: {fileID: -3194847936386300935, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -13554,8 +13588,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
+  m_sharedMaterial: {fileID: -3194847936386300935, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -14528,8 +14562,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
+  m_sharedMaterial: {fileID: -3194847936386300935, guid: 702daa17d23040d458ba1a245ec67dd8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -22688,7 +22722,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1429357037}
   m_Layer: 0
-  m_Name: PlayerSpot2
+  m_Name: EnemySpot2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -22890,7 +22924,7 @@ GameObject:
   - component: {fileID: 1438267955}
   - component: {fileID: 1438267954}
   m_Layer: 5
-  m_Name: Card1 (1)
+  m_Name: Card2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29224,8 +29258,9 @@ GameObject:
   - component: {fileID: 1900818738}
   - component: {fileID: 1900818737}
   - component: {fileID: 1900818739}
+  - component: {fileID: 1900818740}
   m_Layer: 5
-  m_Name: Button (1)
+  m_Name: Attack2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29246,9 +29281,9 @@ RectTransform:
   - {fileID: 863948333}
   m_Father: {fileID: 299296748}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -396, y: 200}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 564, y: -295}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1900818737
@@ -29272,7 +29307,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 0}
-  m_Type: 1
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -29333,6 +29368,22 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1900818740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900818735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d179bb98826472643b26c87d4d5354e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldTarget: {fileID: 1429357037}
+  offset: {x: 20, y: -20}
+  sceneCamera: {fileID: 519420031}
+  canvas: {fileID: 299296747}
 --- !u!1 &1904191496
 GameObject:
   m_ObjectHideFlags: 0
@@ -29592,8 +29643,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isPlayerHUD: 0
   nameText: {fileID: 0}
-  healthText: {fileID: 0}
-  healthSlider: {fileID: 0}
+  healthText: {fileID: 1182042258}
+  healthSlider: {fileID: 1955941443}
   statusEffectIcons: []
   bulletIcons: []
   bulletFullSprite: {fileID: 0}
