@@ -103,12 +103,13 @@ public class TurnBasedSystem : MonoBehaviour
     [Header("Debug — read only")]
     [SerializeField] TurnState currentState;
 
-    bool isProcessingTurn     = false;
-    int  selectedCardSlot     = -1;
-    bool cardConfirmed        = false;
-    int  selectedEnemyIndex   = -1;
-    bool enemyConfirmed       = false;
-    bool isInFreeShotMode     = false;
+    bool isProcessingTurn      = false;
+    int  selectedCardSlot      = -1;
+    bool cardConfirmed         = false;
+    int  selectedEnemyIndex    = -1;
+    bool enemyConfirmed        = false;
+    bool cancelTargeting       = false;   // right-click during targeting returns to card selection
+    bool isInFreeShotMode      = false;
     bool dodgePressedThisFrame = false;
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -127,6 +128,10 @@ public class TurnBasedSystem : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.E) && currentState == TurnState.PlayerTurn)
             ToggleFreeShotMode();
+
+        // Right-click cancels targeting and returns to card selection
+        if (Input.GetMouseButtonDown(1) && currentState == TurnState.PlayerTurn)
+            cancelTargeting = true;
 
 #if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.K) && enemyUnits[0] != null)
@@ -189,6 +194,7 @@ public class TurnBasedSystem : MonoBehaviour
             {
                 enemyButtons[i].onClick.RemoveAllListeners();
                 enemyButtons[i].onClick.AddListener(() => OnEnemyButtonClicked(idx));
+                enemyButtons[i].gameObject.SetActive(false); // hidden at start
             }
         }
 
@@ -217,6 +223,7 @@ public class TurnBasedSystem : MonoBehaviour
         for (int i = 0; i < activeCardSlots.Length; i++)
             DrawToSlot(i);
 
+        SetCombatHUDForTurn(true);  // start with dodge HUD hidden, freeshot state visible
         RefreshUI();
         yield return null;
 
@@ -256,18 +263,32 @@ public class TurnBasedSystem : MonoBehaviour
 
         dialogue.text = "Your turn — pick a card  (E = Free Shot)";
         ExitFreeShotMode();
+        SetEnemyButtonsVisible(false);   // hidden until card or freeshot is chosen
+        SetCombatHUDForTurn(true);       // hide dodge HUD, show freeshot state
         RefreshUI();
 
-        // Wait for card selection (free-shot may happen freely in the meantime)
+        // ── Phase A: wait for card selection ──────────────────────────────────
         selectedCardSlot = -1;
         cardConfirmed    = false;
 
         while (!cardConfirmed)
         {
             if (isInFreeShotMode)
+            {
+                SetEnemyButtonsVisible(true);
                 dialogue.text = "FREE SHOT — click an enemy  (E = back to cards)";
+            }
+            else
+            {
+                SetEnemyButtonsVisible(false);
+                dialogue.text = "Your turn — pick a card  (E = Free Shot)";
+            }
             yield return null;
         }
+
+        // Hide buttons again when leaving freeshot back to card mode
+        SetEnemyButtonsVisible(false);
+        ExitFreeShotMode();
 
         // ── Card was selected — ask for target ────────────────────────────────
         int      cardSlot = selectedCardSlot;
@@ -282,15 +303,41 @@ public class TurnBasedSystem : MonoBehaviour
             yield break;
         }
 
-        dialogue.text = "Choose a target";
+        // Show enemy buttons now that a card is selected
+        SetEnemyButtonsVisible(true);
+        SetEnemyButtonsInteractable(true);
+        dialogue.text = $"{played.cardName} — pick a target.  [E = Free Shot]  [Right-Click = Cancel]";
         selectedEnemyIndex = -1;
         enemyConfirmed     = false;
-        SetEnemyButtonsInteractable(true);
+        cancelTargeting    = false;
 
-        while (!enemyConfirmed)
+        // ── Phase B: wait for target, cancel, or switch to freeshot ──────────
+        while (!enemyConfirmed && !cancelTargeting)
+        {
+            if (isInFreeShotMode)
+            {
+                // Player switched to freeshot mid-targeting — restart player turn
+                SetEnemyButtonsInteractable(false);
+                SetEnemyButtonsVisible(false);
+                isProcessingTurn = false;
+                StartCoroutine(PlayerTurn());
+                yield break;
+            }
             yield return null;
+        }
 
         SetEnemyButtonsInteractable(false);
+        SetEnemyButtonsVisible(false);
+
+        // Player cancelled — return to card selection
+        if (cancelTargeting)
+        {
+            cancelTargeting  = false;
+            dialogue.text    = "Cancelled. Pick a card.";
+            isProcessingTurn = false;
+            StartCoroutine(PlayerTurn());
+            yield break;
+        }
 
         int targetIdx = selectedEnemyIndex;
         if (targetIdx < 0 || targetIdx >= 3 ||
@@ -357,6 +404,7 @@ public class TurnBasedSystem : MonoBehaviour
         isProcessingTurn = true;
 
         SetCardUIVisible(false);
+        SetCombatHUDForTurn(false);      // show dodge HUD, hide freeshot state
 
         for (int i = 0; i < 3; i++)
         {
@@ -542,6 +590,8 @@ public class TurnBasedSystem : MonoBehaviour
         if (isInFreeShotMode)
         {
             ExitFreeShotMode();
+            SetEnemyButtonsVisible(false);
+            SetEnemyButtonsInteractable(false);
             dialogue.text = "Free shot off — pick a card";
         }
         else
@@ -553,6 +603,8 @@ public class TurnBasedSystem : MonoBehaviour
             }
             isInFreeShotMode = true;
             if (freeShotStateText != null) freeShotStateText.text = "FreeShot: ON";
+            SetEnemyButtonsVisible(true);
+            SetEnemyButtonsInteractable(true);
             dialogue.text = "FREE SHOT — click an enemy  (E = back to cards)";
         }
 
@@ -563,6 +615,8 @@ public class TurnBasedSystem : MonoBehaviour
     {
         isInFreeShotMode = false;
         if (freeShotStateText != null) freeShotStateText.text = "FreeShot: OFF";
+        SetEnemyButtonsVisible(false);
+        SetEnemyButtonsInteractable(false);
     }
 
     void PerformFreeShot(int enemyIndex)
@@ -597,8 +651,17 @@ public class TurnBasedSystem : MonoBehaviour
 
         if (focusPoints <= 0)
         {
+            // Ran out of bullets — exit freeshot and hide buttons
             ExitFreeShotMode();
+            SetEnemyButtonsVisible(false);
+            SetEnemyButtonsInteractable(false);
             dialogue.text = "Out of bullets — pick a card";
+        }
+        else if (isInFreeShotMode)
+        {
+            // Still have bullets and still in freeshot — keep buttons visible and clickable
+            SetEnemyButtonsVisible(true);
+            SetEnemyButtonsInteractable(true);
         }
 
         RefreshUI();
@@ -734,12 +797,8 @@ public class TurnBasedSystem : MonoBehaviour
                 label.text = slot != null ? $"{slot.cardName}\n({slot.cardDamage} dmg)" : "—";
         }
 
-        for (int i = 0; i < 3; i++)
-        {
-            if (enemyButtons == null || enemyButtons[i] == null) continue;
-            bool alive = enemyUnits[i] != null && enemyUnits[i].currentHP > 0;
-            enemyButtons[i].interactable = isPlayerTurn && alive && isInFreeShotMode;
-        }
+        // Enemy button visibility and interactability is managed explicitly
+        // by SetEnemyButtonsVisible / SetEnemyButtonsInteractable in the turn coroutine.
 
         if (freeShotButton != null)
             freeShotButton.interactable = isPlayerTurn && focusPoints > 0;
@@ -765,6 +824,34 @@ public class TurnBasedSystem : MonoBehaviour
             if (enemyButtons[i] == null) continue;
             bool alive = enemyUnits[i] != null && enemyUnits[i].currentHP > 0;
             enemyButtons[i].interactable = interactable && alive;
+        }
+    }
+
+    /// <summary>
+    /// Show dodge HUD during enemy turns, hide it during player turn.
+    /// Also hides the freeshot state text during enemy turns.
+    /// </summary>
+    void SetCombatHUDForTurn(bool isPlayerTurn)
+    {
+        // Dodge bar — only visible during enemy turns
+        if (dodgeText != null)
+            dodgeText.gameObject.SetActive(!isPlayerTurn);
+
+        // FreeShot state label — only visible during player turn
+        if (freeShotStateText != null)
+            freeShotStateText.gameObject.SetActive(isPlayerTurn);
+    }
+
+    /// <summary>Show or hide all enemy target buttons.</summary>
+    void SetEnemyButtonsVisible(bool visible)
+    {
+        if (enemyButtons == null) return;
+        for (int i = 0; i < 3; i++)
+        {
+            if (enemyButtons[i] == null) continue;
+            // Only show buttons for enemies that are still alive
+            bool alive = enemyUnits[i] != null && enemyUnits[i].currentHP > 0;
+            enemyButtons[i].gameObject.SetActive(visible && alive);
         }
     }
 

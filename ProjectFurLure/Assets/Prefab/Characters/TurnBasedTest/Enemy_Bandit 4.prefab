@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3766864883799582714}
   - component: {fileID: 1577763844148643872}
   - component: {fileID: 6707011674009718906}
-  - component: {fileID: -8994971453992682710}
+  - component: {fileID: -439205415170143452}
   m_Layer: 0
   m_Name: Enemy_Bandit 4
   m_TagString: Untagged
@@ -107,7 +107,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1.0119019, y: 1.9995601}
   m_EdgeRadius: 0
---- !u!114 &-8994971453992682710
+--- !u!114 &-439205415170143452
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -116,13 +116,52 @@ MonoBehaviour:
   m_GameObject: {fileID: 3533911324234780552}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 186e6264ee92d8445a7ec5325f05714a, type: 3}
+  m_Script: {fileID: 11500000, guid: 635e7fb2a429a5b418591806ebef869b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  unitName: Gunmen
-  damage: 20
+  unitName: Enemy
+  enemyType: 1
+  affiliation: 0
+  role: 1
   maxHP: 300
   currentHP: 300
+  baseDamage: 5
+  damage: 5
+  attacks:
+  - attackName: 
+    damage: 0
+    appliedEffect: 0
+    effectDuration: 0
+    effectDotDamage: 0
+    effectIcon: {fileID: 0}
+    isHeal: 0
+    healAmount: 0
+  - attackName: 
+    damage: 0
+    appliedEffect: 0
+    effectDuration: 0
+    effectDotDamage: 0
+    effectIcon: {fileID: 0}
+    isHeal: 0
+    healAmount: 0
+  - attackName: 
+    damage: 0
+    appliedEffect: 0
+    effectDuration: 0
+    effectDotDamage: 0
+    effectIcon: {fileID: 0}
+    isHeal: 0
+    healAmount: 0
+  healMove:
+    attackName: Heal
+    damage: 5
+    appliedEffect: 0
+    effectDuration: 2
+    effectDotDamage: 1
+    effectIcon: {fileID: 0}
+    isHeal: 1
+    healAmount: 5
+  activeEffects: []
 --- !u!1 &3628640819467154874
 GameObject:
   m_ObjectHideFlags: 0
