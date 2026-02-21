@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3766864883799582714}
   - component: {fileID: 1577763844148643872}
   - component: {fileID: 6707011674009718906}
-  - component: {fileID: -8994971453992682710}
   m_Layer: 0
   m_Name: Enemy_Bandit 3
   m_TagString: Untagged
@@ -107,22 +106,6 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1.0119019, y: 1.9995601}
   m_EdgeRadius: 0
---- !u!114 &-8994971453992682710
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3533911324234780552}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 186e6264ee92d8445a7ec5325f05714a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  unitName: Gunmen
-  damage: 20
-  maxHP: 300
-  currentHP: 300
 --- !u!1 &3628640819467154874
 GameObject:
   m_ObjectHideFlags: 0

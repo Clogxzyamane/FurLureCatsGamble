@@ -1,600 +1,776 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  TurnBasedSystem.cs  —  Final
+//
+//  Dependencies (all must be in your project):
+//    • PlayerUnit.cs     — player character component
+//    • EnemyData.cs      — EnemyUnit, EnemyAttack, StatusEffect, all enums
+//    • TurnBasedHUD.cs   — HUD for both player and enemies
+//    • Card.cs           — your existing Card ScriptableObject / class
+//    • PlayerLevel.cs    — your existing PlayerLevel component (optional)
+//
+//  Turn order:  PlayerTurn → Enemy1 → Enemy2 → Enemy3 → repeat
+//  Free-shot:   E key toggles; clicking enemy button spends 1 bullet.
+//  Dodge:       SPACE during dodge window; success = no damage + 1 bullet.
+// ─────────────────────────────────────────────────────────────────────────────
+
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
 public enum TurnState { Start, PlayerTurn, EnemyTurn, Victory, Defeat }
 
 public class TurnBasedSystem : MonoBehaviour
 {
-    public GameObject player;
-    public GameObject enemy1;
-    public GameObject enemy2;
-    public GameObject enemy3;
+    // ── Prefabs ───────────────────────────────────────────────────────────────
 
-    public Transform playerPoint;
-    public Transform enemyPoint1;
-    public Transform enemyPoint2;
-    public Transform enemyPoint3;
+    [Header("Unit Prefabs")]
+    [SerializeField] GameObject playerPrefab;
+    [SerializeField] GameObject enemy1Prefab;
+    [SerializeField] GameObject enemy2Prefab;
+    [SerializeField] GameObject enemy3Prefab;
 
-    // runtime instance references (cached so we can clean them up)
+    [Header("Spawn Points")]
+    [SerializeField] Transform playerPoint;
+    [SerializeField] Transform enemyPoint1;
+    [SerializeField] Transform enemyPoint2;
+    [SerializeField] Transform enemyPoint3;
+
+    // ── Runtime unit references ───────────────────────────────────────────────
+
     GameObject playerGO;
-    GameObject enemyGO1;
-    GameObject enemyGO2;
-    GameObject enemyGO3;
+    PlayerUnit playerUnit;                          // Echo — uses PlayerUnit
 
-    PlayerUnit playerUnit;
-    PlayerUnit enemyUnit1;
-    PlayerUnit enemyUnit2;
-    PlayerUnit enemyUnit3;
+    readonly GameObject[] enemyGOs   = new GameObject[3];
+    readonly EnemyUnit[]  enemyUnits = new EnemyUnit[3];  // enemies use EnemyUnit
 
-    // Arrays for easier iteration/management of enemy spots and HUDs
-    PlayerUnit[] enemyUnits;
+    // ── UI ────────────────────────────────────────────────────────────────────
+
+    [Header("Dialogue")]
+    [SerializeField] TextMeshProUGUI dialogue;
+
+    [Header("HUDs")]
+    [SerializeField] TurnBasedHUD playerHUD;
+    [SerializeField] TurnBasedHUD enemy1HUD;
+    [SerializeField] TurnBasedHUD enemy2HUD;
+    [SerializeField] TurnBasedHUD enemy3HUD;
     TurnBasedHUD[] enemyHUDs;
 
-    public TextMeshProUGUI dialogue;
+    [Header("Enemy Target Buttons")]
+    [SerializeField] Button enemyButton1;
+    [SerializeField] Button enemyButton2;
+    [SerializeField] Button enemyButton3;
+    Button[] enemyButtons;
 
-    public TurnBasedHUD playerHUD;
-    public TurnBasedHUD enemy1HUD;
-    public TurnBasedHUD enemy2HUD;
-    public TurnBasedHUD enemy3HUD;
+    [Header("Card Buttons")]
+    [SerializeField] Button cardButton1;
+    [SerializeField] Button cardButton2;
+    [SerializeField] Button cardButton3;
 
-    public TurnState State;
+    [Header("Free-Shot")]
+    [SerializeField] Button          freeShotButton;
+    [SerializeField] TextMeshProUGUI focusLabel;
+    [SerializeField] TextMeshProUGUI freeShotStateText;
 
-    // Prevent overlapping turn coroutines
-    bool isProcessingTurn = false;
+    [Header("Dodge HUD")]
+    [SerializeField] TextMeshProUGUI dodgeText;
 
-    // Dodge configuration (player can press Space during enemy attack window)
-    public float dodgeWindowSeconds = 1.5f; // how long player has to press Space
-    [Range(0f, 1f)]
-    public float dodgeSuccessChance = 0.75f; // probability that a space press results in successful dodge
+    // ── Cards ─────────────────────────────────────────────────────────────────
 
-    // Card / deck fields
-    public List<Card> deck = new List<Card>(); // place cards here in inspector or populate at runtime
-    public Card[] hand = new Card[3]; // three card slots
-    public Button[] cardButtons; // assign 3 buttons in inspector, optional
-    public TextMeshProUGUI[] cardLabels; // assign 3 labels in inspector, optional
+    [Header("Card System")]
+    [Tooltip("Drag CardBase assets here to populate the deck. " +
+             "Create cards via: Right-click Project → Cards → Card Base.")]
+    [SerializeField] List<CardBase> deck = new List<CardBase>();
+    CardBase[]     activeCardSlots = new CardBase[3];
+    List<CardBase> discardPile     = new List<CardBase>();
 
-    // FreeShot (Focus / bullets) fields
-    [Header("FreeShot (Focus)")]
-    [Range(0, 9)]
-    public int maxFocusPoints = 9;
-    public int focusPoints = 9; // current bullets / focus
-    public Button freeShotButton; // button to toggle free-shot mode (assign in inspector)
-    public TextMeshProUGUI focusLabel; // UI label to show current focus/bullets
+    // ── Bullets / Focus ───────────────────────────────────────────────────────
 
-    // internal selection state
-    int selectedHandIndex = -1;
-    bool cardPlayedThisTurn = false;
+    [Header("Focus (Bullets)")]
+    [Range(0, 9)] [SerializeField] int maxFocusPoints = 9;
+    [SerializeField]               int focusPoints    = 9;
 
-    // free-shot runtime state
-    bool isInFreeShotMode = false;
-    public int freeShotDamage = 1; // damage per free shot (can use playerUnit.damage instead)
+    // ── Dodge timing ──────────────────────────────────────────────────────────
 
-    void Start()        
+    [Header("Dodge Timing")]
+    [SerializeField] float attackTime       = 1.5f;
+    [SerializeField] float dodgeWindowStart = 0.5f;
+    [SerializeField] float dodgeWindowEnd   = 0.9f;
+
+    // ── State ─────────────────────────────────────────────────────────────────
+
+    [Header("Debug — read only")]
+    [SerializeField] TurnState currentState;
+
+    bool isProcessingTurn     = false;
+    int  selectedCardSlot     = -1;
+    bool cardConfirmed        = false;
+    int  selectedEnemyIndex   = -1;
+    bool enemyConfirmed       = false;
+    bool isInFreeShotMode     = false;
+    bool dodgePressedThisFrame = false;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Unity lifecycle
+    // ─────────────────────────────────────────────────────────────────────────
+
+    void Start()
     {
-        State = TurnState.Start;
+        currentState = TurnState.Start;
         StartCoroutine(SetupFight());
-    }
-
-    IEnumerator SetupFight()
-    {
-        // Instantiate player and enemies at the spawn transforms (use position+rotation so they appear correctly)
-        playerGO = Instantiate(player, playerPoint.position, playerPoint.rotation);
-        playerGO.SetActive(true);
-        playerUnit = playerGO.GetComponent<PlayerUnit>();
-        if (playerUnit != null)
-        {
-            // Ensure runtime fields are initialized so HUD shows correct values immediately
-            playerUnit.currentHP = playerUnit.maxHP;
-            playerUnit.damage = playerUnit.baseDamage;
-        }
-
-        enemyGO1 = Instantiate(enemy1, enemyPoint1.position, enemyPoint1.rotation);
-        enemyGO1.SetActive(true);
-        enemyUnit1 = enemyGO1.GetComponent<PlayerUnit>();
-        if (enemyUnit1 != null)
-        {
-            enemyUnit1.currentHP = enemyUnit1.maxHP;
-            enemyUnit1.damage = enemyUnit1.baseDamage;
-        }
-
-        enemyGO2 = Instantiate(enemy2, enemyPoint2.position, enemyPoint2.rotation);
-        enemyGO2.SetActive(true);
-        enemyUnit2 = enemyGO2.GetComponent<PlayerUnit>();
-        if (enemyUnit2 != null)
-        {
-            enemyUnit2.currentHP = enemyUnit2.maxHP;
-            enemyUnit2.damage = enemyUnit2.baseDamage;
-        }
-
-        enemyGO3 = Instantiate(enemy3, enemyPoint3.position, enemyPoint3.rotation);
-        enemyGO3.SetActive(true);
-        enemyUnit3 = enemyGO3.GetComponent<PlayerUnit>();
-        if (enemyUnit3 != null)
-        {
-            enemyUnit3.currentHP = enemyUnit3.maxHP;
-            enemyUnit3.damage = enemyUnit3.baseDamage;
-        }
-
-        // Build arrays for iteration
-        enemyUnits = new PlayerUnit[] { enemyUnit1, enemyUnit2, enemyUnit3 };
-        enemyHUDs = new TurnBasedHUD[] { enemy1HUD, enemy2HUD, enemy3HUD };
-
-        // Initialize HUDs (null-checks to avoid runtime errors)
-        if (playerUnit != null && playerHUD != null)
-        {
-            playerHUD.SetHUD(playerUnit);
-            // show bullets immediately on player HUD
-            playerHUD.SetBullets(focusPoints, maxFocusPoints);
-            // status effects will be set by caller mapping; clear for now
-            playerHUD.SetStatusEffects(null);
-        }
-
-        for (int i = 0; i < enemyUnits.Length; i++)
-        {
-            if (enemyUnits[i] != null && enemyHUDs[i] != null)
-            {
-                enemyHUDs[i].SetHUD(enemyUnits[i]);
-                enemyHUDs[i].SetStatusEffects(null); // set status sprites later via your registry
-            }
-        }
-
-        // Prepare card UI listeners (safe null-checks)
-        if (cardButtons != null)
-        {
-            for (int i = 0; i < cardButtons.Length; i++)
-            {
-                int idx = i;
-                cardButtons[i].onClick.RemoveAllListeners();
-                cardButtons[i].onClick.AddListener(() => OnPlayCard(idx));
-            }
-        }
-
-        // Wire freeShot button safely
-        if (freeShotButton != null)
-        {
-            freeShotButton.onClick.RemoveAllListeners();
-            freeShotButton.onClick.AddListener(OnToggleFreeShot);
-        }
-
-        // Ensure focusPoints is within range and update UI
-        focusPoints = Mathf.Clamp(focusPoints, 0, maxFocusPoints);
-        UpdateCardUI();
-
-        // Shuffle deck and draw initial hand
-        ShuffleDeck();
-        for (int i = 0; i < hand.Length; i++)
-            DrawToHandSlot(i);
-
-        UpdateCardUI();
-
-        // Yield one frame to ensure all objects/HUDs are initialized and visible
-        yield return null;
-
-        State = TurnState.PlayerTurn;
-        // Start the PlayerTurn coroutine properly
-        StartCoroutine(PlayerTurn());
     }
 
     void Update()
     {
-        // Handle free-shot targeting when active
-        if (isInFreeShotMode && State == TurnState.PlayerTurn && focusPoints > 0)
-        {
-            // Prevent clicks over UI from firing shots
-            if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
-            {
-                Camera cam = Camera.main;
-                if (cam == null) return;
+        dodgePressedThisFrame = Input.GetKeyDown(KeyCode.Space);
 
-                Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hit;
-                if (Physics.Raycast(ray, out hit, 100f))
-                {
-                    // attempt to find a PlayerUnit on the hit object or its parents
-                    PlayerUnit hitUnit = hit.collider.GetComponentInParent<PlayerUnit>();
-                    if (hitUnit != null && hitUnit != playerUnit)
-                    {
-                        AttemptFreeShot(hitUnit);
-                    }
-                }
+        if (Input.GetKeyDown(KeyCode.E) && currentState == TurnState.PlayerTurn)
+            ToggleFreeShotMode();
+
+#if UNITY_EDITOR
+        if (Input.GetKeyDown(KeyCode.K) && enemyUnits[0] != null)
+            StartCoroutine(EnemyAttackSequence(enemyUnits[0], enemyUnits[0].damage));
+#endif
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  SETUP
+    // ─────────────────────────────────────────────────────────────────────────
+
+    IEnumerator SetupFight()
+    {
+        // ── Spawn player ──────────────────────────────────────────────────────
+        playerGO   = SpawnUnit(playerPrefab, playerPoint);
+        playerUnit = playerGO != null ? playerGO.GetComponent<PlayerUnit>() : null;
+        if (playerUnit != null)
+        {
+            playerUnit.currentHP = playerUnit.maxHP;
+            playerUnit.damage    = playerUnit.baseDamage;
+        }
+
+        // ── Spawn enemies ─────────────────────────────────────────────────────
+        Transform[]  spawnPts = { enemyPoint1, enemyPoint2, enemyPoint3 };
+        GameObject[] prefabs  = { enemy1Prefab, enemy2Prefab, enemy3Prefab };
+
+        for (int i = 0; i < 3; i++)
+        {
+            enemyGOs[i]   = SpawnUnit(prefabs[i], spawnPts[i]);
+            enemyUnits[i] = enemyGOs[i] != null ? enemyGOs[i].GetComponent<EnemyUnit>() : null;
+            if (enemyUnits[i] != null)
+            {
+                enemyUnits[i].currentHP = enemyUnits[i].maxHP;
+                enemyUnits[i].damage    = enemyUnits[i].baseDamage;
             }
         }
+
+        // ── Build HUD array ───────────────────────────────────────────────────
+        enemyHUDs = new TurnBasedHUD[] { enemy1HUD, enemy2HUD, enemy3HUD };
+
+        // ── Initialise player HUD ─────────────────────────────────────────────
+        if (playerHUD != null && playerUnit != null)
+        {
+            playerHUD.SetPlayerHUD(playerUnit, focusPoints, maxFocusPoints);
+        }
+
+        // ── Initialise enemy HUDs ─────────────────────────────────────────────
+        for (int i = 0; i < 3; i++)
+        {
+            if (enemyHUDs[i] != null && enemyUnits[i] != null)
+                enemyHUDs[i].SetEnemyHUD(enemyUnits[i]);
+        }
+
+        // ── Build enemy button array & wire listeners ─────────────────────────
+        enemyButtons = new Button[] { enemyButton1, enemyButton2, enemyButton3 };
+        for (int i = 0; i < 3; i++)
+        {
+            int idx = i;
+            if (enemyButtons[i] != null)
+            {
+                enemyButtons[i].onClick.RemoveAllListeners();
+                enemyButtons[i].onClick.AddListener(() => OnEnemyButtonClicked(idx));
+            }
+        }
+
+        // ── Wire card buttons ─────────────────────────────────────────────────
+        Button[] cardBtns = { cardButton1, cardButton2, cardButton3 };
+        for (int i = 0; i < 3; i++)
+        {
+            int idx = i;
+            if (cardBtns[i] != null)
+            {
+                cardBtns[i].onClick.RemoveAllListeners();
+                cardBtns[i].onClick.AddListener(() => OnCardButtonClicked(idx));
+            }
+        }
+
+        // ── Wire free-shot button ─────────────────────────────────────────────
+        if (freeShotButton != null)
+        {
+            freeShotButton.onClick.RemoveAllListeners();
+            freeShotButton.onClick.AddListener(ToggleFreeShotMode);
+        }
+
+        // ── Deck ──────────────────────────────────────────────────────────────
+        focusPoints = Mathf.Clamp(focusPoints, 0, maxFocusPoints);
+        ShuffleDeck();
+        for (int i = 0; i < activeCardSlots.Length; i++)
+            DrawToSlot(i);
+
+        RefreshUI();
+        yield return null;
+
+        currentState = TurnState.PlayerTurn;
+        StartCoroutine(PlayerTurn());
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  PLAYER TURN
+    // ─────────────────────────────────────────────────────────────────────────
 
     IEnumerator PlayerTurn()
     {
-        if (isProcessingTurn) yield break;
-        if (State != TurnState.PlayerTurn) yield break;
+        if (isProcessingTurn || currentState != TurnState.PlayerTurn) yield break;
         isProcessingTurn = true;
 
-        dialogue.text = "Play your cards";
-        UpdateCardUI();
-
-        // Wait until the player plays one card (or a timeout could be added)
-        selectedHandIndex = -1;
-        cardPlayedThisTurn = false;
-        while (!cardPlayedThisTurn)
-            yield return null;
-
-        // turn will continue after card play
-        int slot = selectedHandIndex;
-        if (slot < 0 || slot >= hand.Length || hand[slot] == null)
+        // Tick player DoT effects (fire/poison applied by enemies)
+        if (playerUnit != null)
         {
-            // invalid selection - end turn gracefully
-            dialogue.text = "Invalid card selection.";
-            yield return new WaitForSeconds(0.8f);
-            State = TurnState.EnemyTurn;
-            StartCoroutine(EnemyTurn());
+            int playerDot = playerUnit.TickStatusEffects();
+            if (playerDot > 0)
+            {
+                playerHUD?.SetHP(playerUnit.currentHP);
+                playerHUD?.SetStatusEffectsFromUnit(playerUnit.activeEffects);
+                dialogue.text = $"You take {playerDot} from status effects!";
+                yield return new WaitForSeconds(0.6f);
+
+                if (playerUnit.currentHP <= 0)
+                {
+                    currentState = TurnState.Defeat;
+                    EndFight();
+                    isProcessingTurn = false;
+                    yield break;
+                }
+            }
+        }
+
+        dialogue.text = "Your turn — pick a card  (E = Free Shot)";
+        ExitFreeShotMode();
+        RefreshUI();
+
+        // Wait for card selection (free-shot may happen freely in the meantime)
+        selectedCardSlot = -1;
+        cardConfirmed    = false;
+
+        while (!cardConfirmed)
+        {
+            if (isInFreeShotMode)
+                dialogue.text = "FREE SHOT — click an enemy  (E = back to cards)";
+            yield return null;
+        }
+
+        // ── Card was selected — ask for target ────────────────────────────────
+        int      cardSlot = selectedCardSlot;
+        CardBase played   = activeCardSlots[cardSlot];
+
+        if (played == null)
+        {
+            dialogue.text = "That slot is empty.";
+            yield return new WaitForSeconds(0.6f);
             isProcessingTurn = false;
+            StartCoroutine(PlayerTurn());
             yield break;
         }
 
-        // Target first alive enemy
-        PlayerUnit target = GetFirstAliveEnemy();
-        if (target == null)
+        dialogue.text = "Choose a target";
+        selectedEnemyIndex = -1;
+        enemyConfirmed     = false;
+        SetEnemyButtonsInteractable(true);
+
+        while (!enemyConfirmed)
+            yield return null;
+
+        SetEnemyButtonsInteractable(false);
+
+        int targetIdx = selectedEnemyIndex;
+        if (targetIdx < 0 || targetIdx >= 3 ||
+            enemyUnits[targetIdx] == null ||
+            enemyUnits[targetIdx].currentHP <= 0)
         {
-            State = TurnState.Victory;
+            dialogue.text = "Invalid target.";
+            yield return new WaitForSeconds(0.6f);
+            isProcessingTurn = false;
+            StartCoroutine(PlayerTurn());
+            yield break;
+        }
+
+        // ── Resolve card ──────────────────────────────────────────────────────
+        EnemyUnit target = enemyUnits[targetIdx];
+        var       lvl    = playerGO != null ? playerGO.GetComponent<PlayerLevel>() : null;
+        float     mult   = lvl != null ? lvl.GetDamageMultiplier() : 1f;
+        int       dmg    = Mathf.RoundToInt(played.cardDamage * mult);
+        bool      isDead = target.TakeDamage(dmg);
+
+        UpdateEnemyHUD(targetIdx);
+        dialogue.text = $"You play {played.cardName} → {target.unitName} for {dmg} dmg!";
+
+        // Apply any status effects the card carries
+        foreach (var effectType in played.statusEffects)
+        {
+            if (effectType == StatusEffectType.None) continue;
+            target.ApplyStatusEffect(new StatusEffect(
+                effectType,
+                played.effectDuration,
+                played.effectDotDamage,
+                played.effectIcon));
+        }
+        UpdateEnemyHUD(targetIdx); // refresh again after effects applied
+
+        discardPile.Add(played);
+        activeCardSlots[cardSlot] = null;
+        DrawToSlot(cardSlot);
+
+        yield return new WaitForSeconds(1.2f);
+        if (isDead) KillEnemy(targetIdx);
+        RefreshUI();
+
+        if (AreAllEnemiesDead())
+        {
+            currentState = TurnState.Victory;
             EndFight();
             isProcessingTurn = false;
             yield break;
         }
 
-        // Apply card damage
-        Card played = hand[slot];
-        float dmgMult = 1f;
-        var playerLevel = playerGO != null ? playerGO.GetComponent<PlayerLevel>() : null;
-        if (playerLevel != null) dmgMult = playerLevel.GetDamageMultiplier();
-        int finalDamage = Mathf.RoundToInt(played.damage * dmgMult);
-        bool isDead = target.TakeDamage(finalDamage);
+        isProcessingTurn = false;
+        currentState = TurnState.EnemyTurn;
+        StartCoroutine(EnemyTurnSequence());
+    }
 
-        // Update enemy HUD
-        UpdateEnemyHUDForTarget(target);
+    // ─────────────────────────────────────────────────────────────────────────
+    //  ENEMY TURN SEQUENCE  (Enemy1 → Enemy2 → Enemy3)
+    // ─────────────────────────────────────────────────────────────────────────
 
-        dialogue.text = "You play " + played.cardName + " and hit " + target.unitName + " for " + played.damage + " damage";
-        yield return new WaitForSeconds(1.2f);
+    IEnumerator EnemyTurnSequence()
+    {
+        if (isProcessingTurn || currentState != TurnState.EnemyTurn) yield break;
+        isProcessingTurn = true;
 
-        // Remove played card and refill slot
-        hand[slot] = null;
-        DrawToHandSlot(slot);
-        UpdateCardUI();
+        SetCardUIVisible(false);
 
-        if (isDead)
+        for (int i = 0; i < 3; i++)
         {
-            DestroyEnemyGOForTarget(target);
+            EnemyUnit enemy = enemyUnits[i];
+            if (enemy == null || enemy.currentHP <= 0) continue;
 
-            if (AreAllEnemiesDead())
+            // Tick enemy DoT (player applied fire/poison to this enemy)
+            int dot = enemy.TickStatusEffects();
+            if (dot > 0)
             {
-                State = TurnState.Victory;
+                UpdateEnemyHUD(i);
+                dialogue.text = $"{enemy.unitName} takes {dot} from effects!";
+                yield return new WaitForSeconds(0.5f);
+
+                if (enemy.currentHP <= 0)
+                {
+                    KillEnemy(i);
+                    if (AreAllEnemiesDead())
+                    {
+                        currentState = TurnState.Victory;
+                        EndFight();
+                        isProcessingTurn = false;
+                        yield break;
+                    }
+                    continue;
+                }
+            }
+
+            // ── AI picks attack or heal ────────────────────────────────────────
+            int attackIdx = enemy.ChooseAttackIndex();
+
+            enemyHUDs[i]?.HighlightAttack(attackIdx);
+            enemyHUDs[i]?.RefreshAttacks(enemy);
+
+            dialogue.text = $"{enemy.unitName}'s turn!";
+            yield return new WaitForSeconds(0.5f);
+
+            if (playerUnit == null)
+            {
+                currentState = TurnState.Defeat;
                 EndFight();
+                isProcessingTurn = false;
+                yield break;
+            }
+
+            if (attackIdx == -1)
+            {
+                // Heal move
+                int healed = enemy.Heal(enemy.healMove.healAmount);
+                UpdateEnemyHUD(i);
+                dialogue.text = $"{enemy.unitName} heals for {enemy.healMove.healAmount}!";
+                yield return new WaitForSeconds(0.8f);
             }
             else
             {
-                State = TurnState.EnemyTurn;
-                StartCoroutine(EnemyTurn());
+                // Damage attack
+                EnemyAttack chosen = (enemy.attacks != null && attackIdx < enemy.attacks.Count)
+                    ? enemy.attacks[attackIdx]
+                    : null;
+
+                int attackDmg = chosen != null ? chosen.damage : enemy.damage;
+
+                yield return StartCoroutine(EnemyAttackSequence(enemy, attackDmg));
+
+                // Apply status effect to player if the attack has one
+                if (chosen != null &&
+                    chosen.appliedEffect != StatusEffectType.None &&
+                    playerUnit != null)
+                {
+                    playerUnit.ApplyStatusEffect(
+                        new StatusEffect(chosen.appliedEffect,
+                                         chosen.effectDuration,
+                                         chosen.effectDotDamage,
+                                         chosen.effectIcon));
+                    playerHUD?.SetStatusEffectsFromUnit(playerUnit.activeEffects);
+                }
             }
+
+            enemyHUDs[i]?.ClearAttackHighlights();
+
+            if (currentState == TurnState.Defeat)
+            {
+                isProcessingTurn = false;
+                yield break;
+            }
+        }
+
+        // ── Return to player ──────────────────────────────────────────────────
+        isProcessingTurn = false;
+
+        if (playerUnit != null && playerUnit.currentHP > 0)
+        {
+            SetCardUIVisible(true);
+            currentState = TurnState.PlayerTurn;
+            StartCoroutine(PlayerTurn());
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  ENEMY ATTACK SEQUENCE  (single enemy attacks; player may dodge)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public IEnumerator EnemyAttackSequence(EnemyUnit attacker, int damage)
+    {
+        if (attacker == null) yield break;
+
+        float total    = Mathf.Max(0.01f, attackTime);
+        float winStart = Mathf.Clamp01(dodgeWindowStart) * total;
+        float winEnd   = Mathf.Clamp01(dodgeWindowEnd)   * total;
+        float t        = 0f;
+        bool  dodged   = false;
+
+        dodgePressedThisFrame = false;
+
+        while (t < total)
+        {
+            t += Time.deltaTime;
+            float remaining = Mathf.Max(0f, total - t);
+
+            if (t < winStart)
+            {
+                if (dodgeText != null) dodgeText.text = $"Incoming: {remaining:F1}s";
+            }
+            else if (t <= winEnd)
+            {
+                if (dodgeText != null) dodgeText.text = "DODGE!  [ SPACE ]";
+                if (dodgePressedThisFrame) { dodged = true; break; }
+            }
+            else
+            {
+                if (dodgeText != null) dodgeText.text = $"Too late: {remaining:F1}s";
+            }
+
+            dodgePressedThisFrame = false;
+            yield return null;
+
+            // Second check — catches input that arrived after yield
+            if (dodgePressedThisFrame && t >= winStart && t <= winEnd)
+            {
+                dodged = true;
+                break;
+            }
+        }
+
+        if (dodgeText != null) dodgeText.text = "";
+
+        if (dodged)
+        {
+            // Successful dodge → award +1 bullet
+            focusPoints = Mathf.Min(focusPoints + 1, maxFocusPoints);
+            playerHUD?.SetBullets(focusPoints, maxFocusPoints);
+            UpdateFocusLabel();
+            dialogue.text = "Dodged! +1 bullet";
+            yield return new WaitForSeconds(0.8f);
+            yield break;
+        }
+
+        // Attack lands
+        if (playerUnit != null)
+        {
+            bool playerDead = playerUnit.TakeDamage(damage);
+            playerHUD?.SetHP(playerUnit.currentHP);
+            dialogue.text = $"{attacker.unitName} hits you for {damage}!";
+
+            if (playerDead)
+            {
+                currentState = TurnState.Defeat;
+                EndFight();
+            }
+        }
+
+        yield return new WaitForSeconds(0.8f);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  FREE SHOT
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public void ToggleFreeShotMode()
+    {
+        if (currentState != TurnState.PlayerTurn) return;
+
+        if (isInFreeShotMode)
+        {
+            ExitFreeShotMode();
+            dialogue.text = "Free shot off — pick a card";
         }
         else
         {
-            State = TurnState.EnemyTurn;
-            StartCoroutine(EnemyTurn());
-        }
-
-        // reset selection state
-        selectedHandIndex = -1;
-        cardPlayedThisTurn = false;
-        isProcessingTurn = false;
-    }
-
-    // Attempt a free-shot at the provided target; deducts one focus point
-    void AttemptFreeShot(PlayerUnit target)
-    {
-        if (target == null) return;
-        if (State != TurnState.PlayerTurn) return;
-        if (focusPoints <= 0) return;
-
-        focusPoints = Mathf.Max(0, focusPoints - 1);
-        UpdateCardUI();
-
-        // Use player's damage or dedicated freeShotDamage
-        int damageToApply = (playerUnit != null ? playerUnit.damage : freeShotDamage);
-        bool isDead = target.TakeDamage(damageToApply);
-
-        UpdateEnemyHUDForTarget(target);
-        dialogue.text = "Freeshot! You hit " + target.unitName + " for " + damageToApply + " damage";
-
-        if (isDead)
-        {
-            DestroyEnemyGOForTarget(target);
-            if (AreAllEnemiesDead())
+            if (focusPoints <= 0)
             {
-                State = TurnState.Victory;
-                EndFight();
+                dialogue.text = "No bullets left!";
                 return;
             }
+            isInFreeShotMode = true;
+            if (freeShotStateText != null) freeShotStateText.text = "FreeShot: ON";
+            dialogue.text = "FREE SHOT — click an enemy  (E = back to cards)";
         }
 
-        // Auto-exit free-shot mode when no focus points remain
-        if (focusPoints <= 0)
-            ExitFreeShotMode();
-    }
-
-    // Toggle free-shot mode via UI
-    public void OnToggleFreeShot()
-    {
-        if (State != TurnState.PlayerTurn) return;
-        if (focusPoints <= 0)
-        {
-            dialogue.text = "No bullets remaining!";
-            return;
-        }
-
-        isInFreeShotMode = !isInFreeShotMode;
-        dialogue.text = isInFreeShotMode ? "FreeShot enabled: click an enemy to shoot." : "FreeShot disabled.";
-        UpdateCardUI();
+        RefreshUI();
     }
 
     void ExitFreeShotMode()
     {
         isInFreeShotMode = false;
-        UpdateCardUI();
+        if (freeShotStateText != null) freeShotStateText.text = "FreeShot: OFF";
     }
 
-    IEnumerator EnemyTurn()
+    void PerformFreeShot(int enemyIndex)
     {
-        if (isProcessingTurn) yield break;
-        if (State != TurnState.EnemyTurn) yield break;
-        isProcessingTurn = true;
+        if (focusPoints <= 0 || enemyIndex < 0 || enemyIndex >= 3) return;
 
-        // Each alive enemy gets to act once in enemy phase
-        foreach (var enemy in enemyUnits)
+        EnemyUnit target = enemyUnits[enemyIndex];
+        if (target == null || target.currentHP <= 0) return;
+
+        var   lvl  = playerGO != null ? playerGO.GetComponent<PlayerLevel>() : null;
+        float mult = lvl != null ? lvl.GetDamageMultiplier() : 1f;
+        int   dmg  = Mathf.RoundToInt((playerUnit != null ? playerUnit.damage : 1) * mult);
+        bool  dead = target.TakeDamage(dmg);
+
+        focusPoints = Mathf.Max(0, focusPoints - 1);
+        playerHUD?.SetBullets(focusPoints, maxFocusPoints);
+        UpdateFocusLabel();
+        UpdateEnemyHUD(enemyIndex);
+
+        dialogue.text = $"Bang! {target.unitName} hit for {dmg}  [{focusPoints} bullets left]";
+
+        if (dead)
         {
-            if (enemy == null) continue;
-            if (enemy.currentHP <= 0) continue;
-
-            dialogue.text = enemy.unitName + " attacks!";
-            yield return new WaitForSeconds(0.6f);
-
-            // Safety: ensure player exists
-            if (playerUnit == null)
+            KillEnemy(enemyIndex);
+            if (AreAllEnemiesDead())
             {
-                Debug.LogWarning("PlayerUnit missing during EnemyTurn.");
-                State = TurnState.Defeat;
+                currentState = TurnState.Victory;
                 EndFight();
-                isProcessingTurn = false;
-                yield break;
-            }
-
-            // Give the player a short window to press Space to attempt a dodge
-            bool dodged = false;
-            float timer = 0f;
-            dialogue.text = enemy.unitName + " is preparing to strike � press SPACE to dodge!";
-            while (timer < dodgeWindowSeconds)
-            {
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
-                    // Determine dodge success by configured chance
-                    float baseChance = dodgeSuccessChance;
-                    var playerLevel = playerGO != null ? playerGO.GetComponent<PlayerLevel>() : null;
-                    float bonus = (playerLevel != null) ? playerLevel.GetDodgeChanceBonus() : 0f;
-                    float successChance = Mathf.Clamp01(baseChance + bonus);
-                    if (Random.value <= successChance)
-                    {
-                        dodged = true;
-                    }
-                    else
-                    {
-                        dodged = false;
-                    }
-                    break;
-                }
-                timer += Time.deltaTime;
-                yield return null; // wait one frame
-            }
-
-            if (dodged)
-            {
-                dialogue.text = "You dodged " + enemy.unitName + "'s attack!";
-                // Slight pause so player sees the result
-                yield return new WaitForSeconds(0.9f);
-                // Update player HUD (no HP change)
-                if (playerHUD != null)
-                    playerHUD.SetHP(playerUnit.currentHP);
-                // Continue to next enemy
-                continue;
-            }
-
-            // No successful dodge: apply damage
-            bool isDead = playerUnit.TakeDamage(enemy.damage);
-
-            // Update player HUD
-            if (playerHUD != null)
-                playerHUD.SetHP(playerUnit.currentHP);
-
-            dialogue.text = enemy.unitName + " attacks you for " + enemy.damage + " damage";
-            yield return new WaitForSeconds(1.1f);
-
-            if (isDead)
-            {
-                State = TurnState.Defeat;
-                EndFight();
-                isProcessingTurn = false;
-                yield break;
+                return;
             }
         }
 
-        // After all enemies acted, return to player turn if player still alive
-        if (playerUnit != null && playerUnit.currentHP > 0)
+        if (focusPoints <= 0)
         {
-            State = TurnState.PlayerTurn;
-            StartCoroutine(PlayerTurn());
+            ExitFreeShotMode();
+            dialogue.text = "Out of bullets — pick a card";
         }
 
-        isProcessingTurn = false;
+        RefreshUI();
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  BUTTON CALLBACKS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public void OnCardButtonClicked(int slotIndex)
+    {
+        if (currentState != TurnState.PlayerTurn) return;
+        if (isInFreeShotMode) return;
+        if (!isProcessingTurn) return;
+        if (slotIndex < 0 || slotIndex >= activeCardSlots.Length) return;
+        if (activeCardSlots[slotIndex] == null) return;
+
+        selectedCardSlot = slotIndex;
+        cardConfirmed    = true;
+    }
+
+    public void OnEnemyButtonClicked(int enemyIndex)
+    {
+        if (currentState != TurnState.PlayerTurn) return;
+
+        if (isInFreeShotMode)
+        {
+            PerformFreeShot(enemyIndex);
+            return;
+        }
+
+        if (!isProcessingTurn) return;
+        if (enemyIndex < 0 || enemyIndex >= 3) return;
+        if (enemyUnits[enemyIndex] == null || enemyUnits[enemyIndex].currentHP <= 0) return;
+
+        selectedEnemyIndex = enemyIndex;
+        enemyConfirmed     = true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  END FIGHT
+    // ─────────────────────────────────────────────────────────────────────────
 
     void EndFight()
     {
-        // Stop any running turns and prevent further actions
         StopAllCoroutines();
         isProcessingTurn = false;
 
-        if (State == TurnState.Victory)
-        {
-            dialogue.text = "You won!";
-        }
-        else if (State == TurnState.Defeat)
-        {
-            dialogue.text = "You Lost!";
-        }
+        dialogue.text = currentState == TurnState.Victory ? "Victory!" : "Defeated…";
 
-        // Cleanup instantiated objects (optional - keeps scene tidy)
+        SetCardUIVisible(false);
+        SetEnemyButtonsInteractable(false);
+
         if (playerGO != null) { Destroy(playerGO); playerGO = null; playerUnit = null; }
-        DestroyIfExists(enemyGO1); enemyGO1 = null; enemyUnit1 = null;
-        DestroyIfExists(enemyGO2); enemyGO2 = null; enemyUnit2 = null;
-        DestroyIfExists(enemyGO3); enemyGO3 = null; enemyUnit3 = null;
-
-        // Optionally, clear HUDs or disable UI controls here
+        for (int i = 0; i < 3; i++) KillEnemy(i);
     }
 
-    public void OnAttackButton()
-    {
-        if (State != TurnState.PlayerTurn)
-            return;
+    // ─────────────────────────────────────────────────────────────────────────
+    //  HELPERS
+    // ─────────────────────────────────────────────────────────────────────────
 
-        if (!isProcessingTurn)
-            StartCoroutine(PlayerTurn());
+    GameObject SpawnUnit(GameObject prefab, Transform point)
+    {
+        if (prefab == null || point == null) return null;
+        var go = Instantiate(prefab, point.position, point.rotation);
+        go.SetActive(true);
+        return go;
     }
 
-    // Called by UI buttons (assign in inspector or wired up in SetupFight)
-    public void OnPlayCard(int handIndex)
+    void KillEnemy(int index)
     {
-        if (State != TurnState.PlayerTurn) return;
-        if (isProcessingTurn == false) return; // ensure we're in PlayerTurn coroutine waiting for selection
-        if (handIndex < 0 || handIndex >= hand.Length) return;
-        if (hand[handIndex] == null) return;
-
-        selectedHandIndex = handIndex;
-        cardPlayedThisTurn = true;
+        if (index < 0 || index >= 3) return;
+        if (enemyGOs[index]   != null) { Destroy(enemyGOs[index]); enemyGOs[index] = null; }
+        enemyUnits[index] = null;
+        if (enemyHUDs   != null && enemyHUDs[index]   != null) enemyHUDs[index].gameObject.SetActive(false);
+        if (enemyButtons != null && enemyButtons[index] != null) enemyButtons[index].gameObject.SetActive(false);
     }
 
-    // Helper: returns the first enemy unit with HP > 0
-    PlayerUnit GetFirstAliveEnemy()
+    void UpdateEnemyHUD(int index)
     {
-        if (enemyUnits == null) return null;
-        foreach (var e in enemyUnits)
+        if (index < 0 || index >= 3) return;
+        if (enemyHUDs[index] != null && enemyUnits[index] != null)
         {
-            if (e != null && e.currentHP > 0)
-                return e;
-        }
-        return null;
-    }
-
-    // Helper: update the HUD corresponding to the targeted enemy
-    void UpdateEnemyHUDForTarget(PlayerUnit target)
-    {
-        if (enemyUnits == null || enemyHUDs == null) return;
-        for (int i = 0; i < enemyUnits.Length; i++)
-        {
-            if (enemyUnits[i] == target && enemyHUDs[i] != null)
-            {
-                enemyHUDs[i].SetHP(target.currentHP);
-                break;
-            }
+            enemyHUDs[index].SetHP(enemyUnits[index].currentHP);
+            enemyHUDs[index].SetStatusEffectsFromUnit(enemyUnits[index].activeEffects);
         }
     }
 
-    // Helper: destroy enemy GameObject corresponding to a dead target (keeps arrays intact)
-    void DestroyEnemyGOForTarget(PlayerUnit target)
-    {
-        if (target == enemyUnit1) DestroyIfExists(enemyGO1);
-        else if (target == enemyUnit2) DestroyIfExists(enemyGO2);
-        else if (target == enemyUnit3) DestroyIfExists(enemyGO3);
-    }
-
-    void DestroyIfExists(GameObject go)
-    {
-        if (go != null)
-            Destroy(go);
-    }
-
-    // Helper: returns true if all enemies are dead or null
     bool AreAllEnemiesDead()
     {
-        if (enemyUnits == null) return true;
-        foreach (var e in enemyUnits)
-        {
-            if (e != null && e.currentHP > 0)
+        for (int i = 0; i < 3; i++)
+            if (enemyUnits[i] != null && enemyUnits[i].currentHP > 0)
                 return false;
-        }
         return true;
     }
 
-    // Draws the top card from deck into specified hand slot (or clears if deck empty)
-    void DrawToHandSlot(int slot)
+    void DrawToSlot(int slot)
     {
-        if (slot < 0 || slot >= hand.Length) return;
-        if (deck != null && deck.Count > 0)
+        if (slot < 0 || slot >= activeCardSlots.Length) return;
+        if (deck.Count == 0 && discardPile.Count > 0)
         {
-            // draw top (index 0)
-            hand[slot] = deck[0];
-            deck.RemoveAt(0);
+            deck.AddRange(discardPile);
+            discardPile.Clear();
+            ShuffleDeck();
         }
-        else
-        {
-            hand[slot] = null;
-        }
+        activeCardSlots[slot] = deck.Count > 0 ? deck[0] : null;
+        if (deck.Count > 0) deck.RemoveAt(0);
     }
 
-    // Update the UI for cards (safe to call even if UI references are null)
-    void UpdateCardUI()
-    {
-        if (cardLabels != null)
-        {
-            for (int i = 0; i < cardLabels.Length; i++)
-            {
-                if (i < hand.Length && hand[i] != null)
-                    cardLabels[i].text = hand[i].cardName + " (" + hand[i].damage + ")";
-                else
-                    cardLabels[i].text = "-";
-            }
-        }
-
-        if (cardButtons != null)
-        {
-            for (int i = 0; i < cardButtons.Length; i++)
-            {
-                bool interactable = (i < hand.Length && hand[i] != null && State == TurnState.PlayerTurn);
-                cardButtons[i].interactable = interactable;
-            }
-        }
-
-        if (freeShotButton != null)
-        {
-            // free-shot is available while it's the player's turn and they have bullets
-            freeShotButton.interactable = (State == TurnState.PlayerTurn && focusPoints > 0);
-            // optional visual: change button text or color depending on isInFreeShotMode
-        }
-
-        if (focusLabel != null)
-            focusLabel.text = "Bullets: " + focusPoints + " / " + maxFocusPoints;
-    }
-
-    // Simple Fisher-Yates shuffle for the deck
     void ShuffleDeck()
     {
         if (deck == null || deck.Count <= 1) return;
         for (int i = 0; i < deck.Count - 1; i++)
         {
-            int j = Random.Range(i, deck.Count);
-            var tmp = deck[i];
-            deck[i] = deck[j];
-            deck[j] = tmp;
+            int      j   = Random.Range(i, deck.Count);
+            CardBase tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp;
         }
     }
+
+    void RefreshUI()
+    {
+        bool isPlayerTurn = currentState == TurnState.PlayerTurn;
+
+        Button[] cardBtns = { cardButton1, cardButton2, cardButton3 };
+        for (int i = 0; i < cardBtns.Length; i++)
+        {
+            if (cardBtns[i] == null) continue;
+            CardBase slot         = i < activeCardSlots.Length ? activeCardSlots[i] : null;
+            bool interactable = isPlayerTurn && !isInFreeShotMode && slot != null;
+            cardBtns[i].interactable = interactable;
+            var label = cardBtns[i].GetComponentInChildren<TextMeshProUGUI>();
+            if (label != null)
+                label.text = slot != null ? $"{slot.cardName}\n({slot.cardDamage} dmg)" : "—";
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (enemyButtons == null || enemyButtons[i] == null) continue;
+            bool alive = enemyUnits[i] != null && enemyUnits[i].currentHP > 0;
+            enemyButtons[i].interactable = isPlayerTurn && alive && isInFreeShotMode;
+        }
+
+        if (freeShotButton != null)
+            freeShotButton.interactable = isPlayerTurn && focusPoints > 0;
+
+        UpdateFocusLabel();
+
+        if (freeShotStateText != null)
+            freeShotStateText.text = isInFreeShotMode ? "FreeShot: ON" : "FreeShot: OFF";
+    }
+
+    void SetCardUIVisible(bool visible)
+    {
+        foreach (var btn in new[] { cardButton1, cardButton2, cardButton3 })
+            if (btn != null) btn.gameObject.SetActive(visible);
+        if (freeShotButton != null) freeShotButton.gameObject.SetActive(visible);
+    }
+
+    void SetEnemyButtonsInteractable(bool interactable)
+    {
+        if (enemyButtons == null) return;
+        for (int i = 0; i < 3; i++)
+        {
+            if (enemyButtons[i] == null) continue;
+            bool alive = enemyUnits[i] != null && enemyUnits[i].currentHP > 0;
+            enemyButtons[i].interactable = interactable && alive;
+        }
+    }
+
+    void UpdateFocusLabel()
+    {
+        if (focusLabel != null)
+            focusLabel.text = $"Bullets: {focusPoints} / {maxFocusPoints}";
+    }
 }
-
-
